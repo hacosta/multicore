@@ -51,7 +51,7 @@ class Female extends Thread {
             barrier.enterFemale();
             Random rand = new Random();
             int n = rand.nextInt(1000) + 500;
-            System.out.println(Thread.currentThread().getName() + " is doing something in the bathroom for " + n);
+            System.out.println(Thread.currentThread().getName() + " is busy in the bathroom for " + n);
             Thread.sleep(n);
             barrier.leaveFemale();
             System.out.println(Thread.currentThread().getName() + "has left  the bathroom");
