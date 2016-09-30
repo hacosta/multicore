@@ -9,10 +9,10 @@ public class hw2_problem1 {
         //System.out.println("Hello, World");
 
         CyclicBarrier barrier = new CyclicBarrier(4);
-        Party first = new Party(1000, barrier, "PARTY-1");
-        Party second = new Party(2000, barrier, "PARTY-2");
-        Party third = new Party(3000, barrier, "PARTY-3");
-        Party fourth = new Party(4000, barrier, "PARTY-4");
+        Players first = new Players(1000, barrier, "Player-1");
+        Players second = new Players(2000, barrier, "Player-2");
+        Players third = new Players(3000, barrier, "Player-3");
+        Players fourth = new Players(4000, barrier, "Player-4");
 
         first.start();
         second.start();
@@ -26,11 +26,11 @@ public class hw2_problem1 {
 
 }
 
-class Party extends Thread {
+class Players extends Thread {
     private int sleeptime;
     private CyclicBarrier barrier;
 
-    public Party(int time, CyclicBarrier barrier, String name) {
+    public Players(int time, CyclicBarrier barrier, String name) {
         super(name);
         this.sleeptime = time;
         this.barrier = barrier;
