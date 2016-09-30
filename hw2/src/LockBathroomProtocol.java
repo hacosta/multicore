@@ -9,6 +9,7 @@ public class LockBathroomProtocol implements BathroomProtocol {
 
     int maleCount;
     int femaleCount;
+    int totalProcessed;
 
     final Random random = new Random();
     final Lock lock = new ReentrantLock();
@@ -20,7 +21,8 @@ public class LockBathroomProtocol implements BathroomProtocol {
     }
 
     public LockBathroomProtocol() {
-        maleCount = femaleCount = 0;
+        totalProcessed = maleCount = femaleCount = 0;
+
     }
 
     public void printStatus() {
@@ -31,8 +33,9 @@ public class LockBathroomProtocol implements BathroomProtocol {
     public void enterMale() {
         try {
             lock.lock();
+            totalProcessed++;
             while (femaleCount > 0) {
-                System.out.println("M waiting");
+                System.out.println("Male waiting...");
                 males.await();
             }
             maleCount++;
@@ -49,8 +52,10 @@ public class LockBathroomProtocol implements BathroomProtocol {
             lock.lock();
             maleCount--;
             System.out.println("Male left the bathroom");
+            printStatus();
             if (maleCount == 0)
                 females.signal();
+            males.signalAll();
         } finally {
             lock.unlock();
         }
@@ -59,8 +64,9 @@ public class LockBathroomProtocol implements BathroomProtocol {
     public void enterFemale() {
         try {
             lock.lock();
+            totalProcessed++;
             while (maleCount > 0) {
-                System.out.println("F waiting");
+                System.out.println("Female waiting...");
                 females.await();
             }
             femaleCount++;
@@ -77,8 +83,10 @@ public class LockBathroomProtocol implements BathroomProtocol {
             lock.lock();
             femaleCount--;
             System.out.println("Female left the bathroom");
+            printStatus();
             if (femaleCount == 0)
                 males.signal();
+            females.signalAll();
         } finally {
             lock.unlock();
         }

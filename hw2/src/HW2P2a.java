@@ -2,6 +2,7 @@ import java.util.Random;
 
 public class HW2P2a {
     final Random random = new Random();
+    final int NUM_THREADS = 20;
 
     public static void sleep(int secs) {
         try {
@@ -18,23 +19,25 @@ public class HW2P2a {
             public void run() {
                 if(random.nextBoolean()) {
                     bathroomProtocol.enterMale();
-                    sleep(random.nextInt(3));
+                    sleep(random.nextInt(5));
                     bathroomProtocol.leaveMale();
                 } else {
                     bathroomProtocol.enterFemale();
-                    sleep(random.nextInt(3));
+                    sleep(random.nextInt(5));
                     bathroomProtocol.leaveFemale();
                 }
             }
         };
-        Thread threads[] = new Thread[10];
-        for (int i = 0; i < 10; i++) {
+
+        Thread threads[] = new Thread[NUM_THREADS];
+        for (int i = 0; i < NUM_THREADS; i++) {
             threads[i] = new Thread(r);
             threads[i].start();
         }
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < NUM_THREADS; i++) {
             threads[i].join();
         }
+        assert(bathroomProtocol.totalProcessed == NUM_THREADS); // Everyone eventually had its turn
     }
 
     public void simplestTest() {
@@ -100,7 +103,6 @@ public class HW2P2a {
         HW2P2a hw = new HW2P2a();
 
         try {
-
             System.out.println("======================");
             hw.simplestTest();
             System.out.println("======================");
@@ -108,7 +110,6 @@ public class HW2P2a {
             System.out.println("======================");
             hw.multipleFemales();
             System.out.println("======================");
-            /* This proves that it's broken */
             hw.backgroundEnter();
         } catch (InterruptedException e) {
             e.printStackTrace();
