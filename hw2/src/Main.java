@@ -29,13 +29,14 @@ class Party extends Thread {
     private int sleeptime;
     private CyclicBarrier barrier;
 
-    public Party (int time, CyclicBarrier barrier,String name) {
+    public Party(int time, CyclicBarrier barrier, String name) {
         super(name);
         this.sleeptime = time;
         this.barrier = barrier;
     }
+
     @Override
-    public void run(){
+    public void run() {
         try {
             Thread.sleep(sleeptime);
             System.out.println(Thread.currentThread().getName() + " is calling await()");
