@@ -81,6 +81,9 @@ public class hw2_problem2a {
         female1.start();
         female2.start();
         male3.start();
+        
+        // create a while loop for a random simulation
+        
         // do stuff
         //in thread, wait to  stop
 
