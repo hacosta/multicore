@@ -26,7 +26,7 @@ public class LockBathroomProtocol implements BathroomProtocol {
     }
 
     public void printStatus() {
-        System.out.println("There is now " + maleCount + " male(s) and " + femaleCount + " female(s) using the bathroom.");
+        System.out.println("There are now " + maleCount + " male(s) and " + femaleCount + " female(s) using the bathroom.");
         assert((maleCount != 0 && femaleCount != 0));
     }
 
