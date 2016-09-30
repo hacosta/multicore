@@ -1,7 +1,7 @@
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
 
-// this is a test
+// this is a tes
 public class Main {
 
     public static void main(String[] args) throws InterruptedException {
