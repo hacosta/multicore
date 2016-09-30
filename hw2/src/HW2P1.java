@@ -1,5 +1,6 @@
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
+import java.util.Random;
 
 public class HW2P1 {
 
@@ -32,8 +33,17 @@ public class HW2P1 {
          */
         System.out.println("Reusing our existing barrier");
         System.out.println("============================");
+        System.out.println("This time wait times are random spikes in wait time");
         for (int i = 0; i < numThreads; i++) {
-            players[i] = new Player(i * 1000, barrier, "Player-" + (i + 1));
+            Random rand = new Random();
+            int n = rand.nextInt(100);
+            if (n > 75){
+                n = n * n;
+            }
+            if (n < 25){
+                n = -450*i;
+            }
+            players[i] = new Player((n + 500*i), barrier, "Player-" + (i + 1));
         }
 
         startAll(players);
@@ -56,7 +66,7 @@ class Player extends Thread {
     public void run() {
         try {
             Thread.sleep(sleeptime);
-            System.out.println(Thread.currentThread().getName() + " is calling await()");
+            System.out.println(Thread.currentThread().getName() + " is calling await() " + sleeptime);
             int turn = barrier.await();
             System.out.println(Thread.currentThread().getName() + " got " + turn);
         } catch (InterruptedException e) {
