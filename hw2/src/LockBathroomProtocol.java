@@ -25,14 +25,16 @@ public class LockBathroomProtocol implements BathroomProtocol {
 
     public void printStatus() {
         System.out.println("There are now " + maleCount + " male(s) and " + femaleCount + " female(s) using the bathroom.");
-        assert((maleCount != 0 && femaleCount != 0));
+        assert ((maleCount != 0 && femaleCount != 0));
     }
 
     public void enterMale() {
         try {
             lock.lock();
-            while (femaleCount > 0)
+            while (femaleCount > 0) {
+                System.out.println("M waiting");
                 males.await();
+            }
             maleCount++;
             printStatus();
         } catch (InterruptedException e) {
@@ -43,19 +45,24 @@ public class LockBathroomProtocol implements BathroomProtocol {
     }
 
     public void leaveMale() {
-        lock.lock();
-        maleCount--;
-        System.out.println("Male left the bathroom");
-        if(maleCount == 0)
-            females.signal();
-        lock.unlock();
+        try {
+            lock.lock();
+            maleCount--;
+            System.out.println("Male left the bathroom");
+            if (maleCount == 0)
+                females.signal();
+        } finally {
+            lock.unlock();
+        }
     }
 
     public void enterFemale() {
         try {
             lock.lock();
-            while (maleCount > 0)
+            while (maleCount > 0) {
+                System.out.println("F waiting");
                 females.await();
+            }
             femaleCount++;
             printStatus();
         } catch (InterruptedException e) {
@@ -66,11 +73,14 @@ public class LockBathroomProtocol implements BathroomProtocol {
     }
 
     public void leaveFemale() {
-        lock.lock();
-        femaleCount--;
-        System.out.println("Female left the bathroom");
-        if(femaleCount == 0)
-            males.signal();
-        lock.unlock();
+        try {
+            lock.lock();
+            femaleCount--;
+            System.out.println("Female left the bathroom");
+            if (femaleCount == 0)
+                males.signal();
+        } finally {
+            lock.unlock();
+        }
     }
 }
