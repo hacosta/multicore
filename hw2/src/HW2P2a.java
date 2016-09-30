@@ -1,6 +1,4 @@
-/**
- * Created by hacosta on 9/29/16.
- */
+
 public class HW2P2a {
 
     public static void sleep(int secs) {

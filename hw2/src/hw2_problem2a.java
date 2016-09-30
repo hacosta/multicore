@@ -1,6 +1,4 @@
-/**
- * Created by  on 9/29/2016.
- */
+
 import java.util.Random;
 
 class Male extends Thread {

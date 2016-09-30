@@ -3,9 +3,7 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-/**
- * Created by hacosta on 9/29/16.
- */
+
 public class LockBathroomProtocol implements BathroomProtocol {
 
 
