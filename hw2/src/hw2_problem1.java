@@ -1,8 +1,8 @@
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
 
-// this is a tes
-public class Main {
+// this is a test
+public class hw2_problem1 {
 
     public static void main(String[] args) throws InterruptedException {
         // Prints "Hello, World" to the terminal window.
