@@ -1,8 +1,8 @@
 import java.util.Random;
 
-public class HW2P2a {
+public class HW2P2 {
     final Random random = new Random();
-    final int NUM_THREADS = 50;
+    final int NUM_THREADS = 20;
 
     public static void sleep(int secs) {
         try {
@@ -12,8 +12,14 @@ public class HW2P2a {
         }
     }
 
-    public void backgroundEnter() throws InterruptedException {
-        final BathroomProtocol bathroomProtocol = new SyncBathroomProtocol();
+    public static BathroomProtocol newProtocol(String type) {
+        if(type.equals("LOCK"))
+            return new LockBathroomProtocol();
+        else
+            return new SyncBathroomProtocol();
+    }
+
+    public void backgroundEnter(final BathroomProtocol bathroomProtocol) throws InterruptedException {
         Runnable r = new Runnable() {
             @Override
             public void run() {
@@ -37,11 +43,9 @@ public class HW2P2a {
         for (int i = 0; i < NUM_THREADS; i++) {
             threads[i].join();
         }
-        //assert(bathroomProtocol.totalProcessed == NUM_THREADS); // Everyone eventually had its turn
     }
 
-    public void simplestTest() {
-        final BathroomProtocol bathroomProtocol = new SyncBathroomProtocol();
+    public void simplestTest(BathroomProtocol bathroomProtocol) {
 
         /* Simple test. */
         bathroomProtocol.enterFemale();
@@ -52,8 +56,7 @@ public class HW2P2a {
         bathroomProtocol.leaveMale();
     }
 
-    public void parallelTest() throws InterruptedException {
-        final BathroomProtocol protocol = new SyncBathroomProtocol();
+    public void parallelTest(final BathroomProtocol bathroomProtocol) throws InterruptedException {
         Thread t = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -61,20 +64,19 @@ public class HW2P2a {
                  * Male should not enter the Bathroom until the lady
                  * leaves.
                  */
-                protocol.enterFemale();
+                bathroomProtocol.enterFemale();
                 sleep(5);
-                protocol.leaveFemale();
+                bathroomProtocol.leaveFemale();
             }
         });
         t.start();
         sleep(1);
-        protocol.enterMale();
-        protocol.leaveMale();
+        bathroomProtocol.enterMale();
+        bathroomProtocol.leaveMale();
         t.join();
     }
 
-    public void multipleFemales() throws InterruptedException {
-        final BathroomProtocol bathroomProtocol = new SyncBathroomProtocol();
+    public void multipleFemales(final BathroomProtocol bathroomProtocol) throws InterruptedException {
 
         bathroomProtocol.enterFemale();
         bathroomProtocol.enterFemale();
@@ -100,20 +102,24 @@ public class HW2P2a {
 
 
     public static void main(String args[]) {
-        HW2P2a hw = new HW2P2a();
-        final BathroomProtocol bathroomProtocol = new SyncBathroomProtocol();
+        HW2P2 hw = new HW2P2();
 
-        try {
-            System.out.println("======================");
-            hw.simplestTest();
-            System.out.println("======================");
-            hw.parallelTest();
-            System.out.println("======================");
-            hw.multipleFemales();
-            System.out.println("======================");
-            hw.backgroundEnter();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        String[] protocolTypes = {"SYNC", "LOCK"};
+
+        for(String type: protocolTypes) {
+            System.out.println("Testing using protocol of type: " + type);
+            try {
+                System.out.println("======================");
+                hw.simplestTest(newProtocol(type));
+                System.out.println("======================");
+                hw.parallelTest(newProtocol(type));
+                System.out.println("======================");
+                hw.multipleFemales(newProtocol(type));
+                System.out.println("======================");
+                hw.backgroundEnter(newProtocol(type));
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
 
 
