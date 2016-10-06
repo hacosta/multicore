@@ -1,0 +1,10 @@
+This is a submission of homework 2 by:
+
+Subhash Mullapudi          (svm95)
+Hector Jesus Acosta Garcia (hja394)
+
+It includes a CyclicBarrier implementation as well as driver code (HW2P1).
+
+And 2 implementations of the BathroomProcotol (LockBathroomProtocol and
+SyncBathroomProtocl). The testing code for BathroomProtocol can be found
+in HW2P2.
