@@ -54,7 +54,7 @@ public class LockBathroomProtocol implements BathroomProtocol {
             System.out.println("Male left the bathroom");
             printStatus();
             if (maleCount == 0)
-                females.signal();
+                females.signalAll();
             males.signalAll();
         } finally {
             lock.unlock();
@@ -85,7 +85,7 @@ public class LockBathroomProtocol implements BathroomProtocol {
             System.out.println("Female left the bathroom");
             printStatus();
             if (femaleCount == 0)
-                males.signal();
+                males.signalAll();
             females.signalAll();
         } finally {
             lock.unlock();
