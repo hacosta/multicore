@@ -31,7 +31,6 @@ FILE *fopen_or_fail(const char *path)
 
 void get_row_cols(char *line, uint32_t *rows, uint32_t *cols)
 {
-	char *arr[2];
 	char *token;
 
 	token = strsep(&line, " ");
