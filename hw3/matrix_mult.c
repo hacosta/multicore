@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <string.h>
 
+#include <omp.h>
+
 size_t MAX_LINE_LENGTH = 4096;
 
 typedef struct {
@@ -23,10 +25,23 @@ FILE *fopen_or_fail(const char *path)
 	FILE *f = fopen(path, "r");
 	int err = errno;
 	if (f == NULL) {
-		fprintf(stderr, "Error opening %s. %s", path, strerror(err));
+		fprintf(stderr, "matrix_mult: Error opening %s. %s", path, strerror(err));
 		exit(err);
 	}
 	return f;
+}
+
+matrix_t *alloc_matrix(uint32_t rows, uint32_t cols)
+{
+	matrix_t *ret = malloc(sizeof(matrix_t));
+	ret->rows = rows;
+	ret->cols = cols;
+
+	ret->matrix = malloc(rows * sizeof(int));
+	for (int i = 0; i < rows; i++)
+		ret->matrix[i] = calloc(cols, sizeof(int));
+
+	return ret;
 }
 
 void get_row_cols(char *line, uint32_t *rows, uint32_t *cols)
@@ -75,6 +90,25 @@ void print_matrix(matrix_t *m)
 	}
 }
 
+matrix_t *matrix_multiply(const matrix_t *m1, const matrix_t *m2)
+{
+	if (m1->cols != m2->rows)
+		return NULL;
+
+	matrix_t *ret = alloc_matrix(m1->rows, m2->cols);
+	int i, j, k;
+
+	fprintf(stderr, "matrix_mult: Using %d threads\n", omp_get_max_threads());
+
+#pragma omp parallel for private (i, j, k) shared(ret)
+	for (i = 0; i < m1->rows; i++)
+		for (j = 0; j < m2->cols; j++)
+			for (k = 0; k < m1->cols; k++)
+				ret->matrix[i][j] += m1->matrix[i][k] * m2->matrix[k][j];
+
+	return ret;
+}
+
 int main(int argc, char* argv[])
 {
 	if (argc != 4)
@@ -91,12 +125,15 @@ int main(int argc, char* argv[])
 	FILE *m1f = fopen_or_fail(matrix_path1);
 	FILE *m2f = fopen_or_fail(matrix_path2);
 
+
+	omp_set_num_threads(num_threads);
+
 	matrix_t *m1 = file_to_matrix(m1f);
 	matrix_t *m2 = file_to_matrix(m2f);
 
-	print_matrix(m1);
-	print_matrix(m2);
+	matrix_t *m3 = matrix_multiply(m1, m2);
 
+	print_matrix(m3);
 
 	return EXIT_SUCCESS;
 }
