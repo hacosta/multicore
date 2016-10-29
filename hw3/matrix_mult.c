@@ -25,23 +25,23 @@ FILE *fopen_or_fail(const char *path)
 	FILE *f = fopen(path, "r");
 	int err = errno;
 	if (f == NULL) {
-		fprintf(stderr, "matrix_mult: Error opening %s. %s", path, strerror(err));
+		fprintf(stderr, "matrix_mult: Error opening %s. %s\n", path, strerror(err));
 		exit(err);
 	}
 	return f;
 }
 
-matrix_t *alloc_matrix(uint32_t rows, uint32_t cols)
+matrix_t *init_matrix(matrix_t *mat, uint32_t rows, uint32_t cols)
 {
-	matrix_t *ret = malloc(sizeof(matrix_t));
-	ret->rows = rows;
-	ret->cols = cols;
+	mat->rows = rows;
+	mat->cols = cols;
 
-	ret->matrix = malloc(rows * sizeof(int));
-	for (int i = 0; i < rows; i++)
-		ret->matrix[i] = calloc(cols, sizeof(int));
+	mat->matrix = malloc(rows * sizeof(int*));
+	for (int i = 0; i < rows; i++) {
+		mat->matrix[i] = malloc(cols * sizeof(int));
+	}
 
-	return ret;
+	return mat;
 }
 
 void get_row_cols(char *line, uint32_t *rows, uint32_t *cols)
@@ -54,34 +54,33 @@ void get_row_cols(char *line, uint32_t *rows, uint32_t *cols)
 	*cols = strtol(token, NULL, 10);
 }
 
-matrix_t *file_to_matrix(FILE *f)
+int file_to_matrix(FILE *f, matrix_t *ret)
 {
 	size_t line_length = MAX_LINE_LENGTH;
 	char *line[MAX_LINE_LENGTH];
 	char *token;
-
-	matrix_t *ret = malloc(sizeof(matrix_t));
+	uint32_t rows, cols;
 
 	getline(line, &line_length, f);
 
-	get_row_cols(*line, &ret->rows, &ret->cols);
+	get_row_cols(*line, &rows, &cols);
 
-	ret->matrix = malloc(ret->rows * sizeof(int));
+	init_matrix(ret, rows, cols);
 
 	for (int i = 0; i < ret->rows; i++) {
-		ret->matrix[i] = malloc(ret->cols * sizeof(int));
 		getline(line, &line_length, f);
 		for (int j = 0; j < ret->cols; j++) {
-			token = strsep(line, " ");
+			token = strtok(j == 0 ? *line : NULL, " ");
 			ret->matrix[i][j] = strtol(token, NULL, 10);
 		}
 	}
 
-	return ret;
+	return 0;
 }
 
 void print_matrix(matrix_t *m)
 {
+	printf("%d %d\n", m->rows, m->cols);
 	for (int i = 0; i < m->rows; i++) {
 		for (int j = 0; j < m->cols; j++) {
 			printf("%d ", m->matrix[i][j]);
@@ -90,23 +89,23 @@ void print_matrix(matrix_t *m)
 	}
 }
 
-matrix_t *matrix_multiply(const matrix_t *m1, const matrix_t *m2)
+matrix_t *matrix_multiply(const matrix_t *m1, const matrix_t *m2, matrix_t *result)
 {
 	if (m1->cols != m2->rows)
 		return NULL;
 
-	matrix_t *ret = alloc_matrix(m1->rows, m2->cols);
+	init_matrix(result, m1->rows, m2->cols);
 	int i, j, k;
 
 	fprintf(stderr, "matrix_mult: Using %d threads\n", omp_get_max_threads());
 
-#pragma omp parallel for private (i, j, k) shared(ret)
+#pragma omp parallel for private (i, j, k) shared(result)
 	for (i = 0; i < m1->rows; i++)
 		for (j = 0; j < m2->cols; j++)
 			for (k = 0; k < m1->cols; k++)
-				ret->matrix[i][j] += m1->matrix[i][k] * m2->matrix[k][j];
+				result->matrix[i][j] += m1->matrix[i][k] * m2->matrix[k][j];
 
-	return ret;
+	return result;
 }
 
 int main(int argc, char* argv[])
@@ -128,12 +127,14 @@ int main(int argc, char* argv[])
 
 	omp_set_num_threads(num_threads);
 
-	matrix_t *m1 = file_to_matrix(m1f);
-	matrix_t *m2 = file_to_matrix(m2f);
+	matrix_t m1, m2, result;
 
-	matrix_t *m3 = matrix_multiply(m1, m2);
+	file_to_matrix(m1f, &m1);
+	file_to_matrix(m2f, &m2);
 
-	print_matrix(m3);
+	matrix_multiply(&m1, &m2, &result);
+
+	print_matrix(&result);
 
 	return EXIT_SUCCESS;
 }
