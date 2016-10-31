@@ -1,5 +1,6 @@
 #include <errno.h>
 #include <limits.h>
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -8,8 +9,11 @@
 
 #include <omp.h>
 
-static int R = 4000;
 #define DEFAULT_S 8000;
+#define THREAD_POOL_SIZE 128
+
+static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+static int C = 0;
 
 void usage(int exit_status)
 {
@@ -31,27 +35,51 @@ int randint(int n) {
 	return r / x;
 }
 
+void *do_montecarlo(void *result)
+{
+	static int R = 2000;
+
+	int x, y;
+	x = randint(R);
+	y = randint(R);
+	if (x * x + y * y < R * R) {
+		pthread_mutex_lock(&mutex);
+		C++;
+		pthread_mutex_unlock(&mutex);
+	}
+	return NULL;
+}
+
 double MonteCarloPi(int s)
 {
-	int R2 = R * R;
-	int c = 0;
+	size_t num_threads = 0;
+	int spawned_threads = 0;
 	double res;
-	int x, y, x2, y2;
 
 	srand(time(NULL));
-#pragma omp parallel for reduction (+:c) shared(x, y, x2, y2, R)
-	for (int i = 0; i < s; i++) {
-		x = randint(R);
-		y = randint(R);
-		x2 = x * x;
-		y2 = y * y;
-		if (x2 + y2 < R2)
-			c++;
+
+	pthread_t threads[THREAD_POOL_SIZE];
+
+	while ( spawned_threads != s ) {
+
+		if (s - spawned_threads < THREAD_POOL_SIZE)
+			num_threads = s - spawned_threads;
+		else
+			num_threads = THREAD_POOL_SIZE;
+
+		for (int t = 0; t < num_threads; t++) {
+			pthread_create(&threads[t], NULL, &do_montecarlo, NULL);
+		}
+
+		for (int t = 0; t < num_threads; t++) {
+			pthread_join(threads[t], NULL);
+		}
+		spawned_threads += num_threads;
 	}
 
-	fprintf(stderr, "c=%d\n", c);
+	fprintf(stderr, "c=%d\n", C);
 	fprintf(stderr, "s=%d\n", s);
-	res = (4 * c) / (double)s;
+	res = (4 * C) / (double)s;
 
 	return res;
 }
