@@ -1,5 +1,3 @@
-package queue;
-
 public class LockFreeQueue implements MyQueue {
 // you are free to add members
 
