@@ -1,6 +1,7 @@
 #include <errno.h>
 #include <limits.h>
 #include <pthread.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -10,10 +11,7 @@
 #include <omp.h>
 
 #define DEFAULT_S 8000;
-#define THREAD_POOL_SIZE 128
-
-static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-static int C = 0;
+#define THREAD_POOL_SIZE 2
 
 void usage(int exit_status)
 {
@@ -26,60 +24,77 @@ int randint(int n) {
 	 * We can't simply use modulo here, because we'd
 	 * skew the results, this seems good enough
 	 */
+	static bool initialized = false;
+	static unsigned int rand_state = 0;
+
+	if (! initialized) {
+		srand(time(NULL));
+		rand_state = rand();
+		initialized = true;
+	}
+
 	unsigned int x = (RAND_MAX + 1u) / n;
 	unsigned int y = x * n;
 	unsigned int r;
 	do {
-		r = rand();
+		r = rand_r(&rand_state);
 	} while(r >= y);
 	return r / x;
 }
 
-void *do_montecarlo(void *result)
+void *do_montecarlo(void *s)
 {
 	static int R = 2000;
 
 	int x, y;
-	x = randint(R);
-	y = randint(R);
-	if (x * x + y * y < R * R) {
-		pthread_mutex_lock(&mutex);
-		C++;
-		pthread_mutex_unlock(&mutex);
+	int *c = malloc(sizeof(int *));
+	int R2 = R * R;
+	int casted_s = *(int *)s;
+
+	*c = 0;
+	fprintf(stderr, "Casted s: %d\n", casted_s);
+	for (int i = 0; i < casted_s; i ++) {
+		x = randint(R);
+		y = randint(R);
+		if (x * x + y * y < R2)
+			(*c)++;
 	}
-	return NULL;
+
+	fprintf(stderr, "Returning %d\n", *c);
+	return (void*)c;
 }
 
 double MonteCarloPi(int s)
 {
-	size_t num_threads = 0;
-	int spawned_threads = 0;
+	int *c = malloc(sizeof(int*));
+	int c_accum = 0;
 	double res;
 
-	srand(time(NULL));
-
 	pthread_t threads[THREAD_POOL_SIZE];
+	int s_arr[THREAD_POOL_SIZE];
 
-	while ( spawned_threads != s ) {
+	for (int t = 0; t < THREAD_POOL_SIZE; t++) {
+		s_arr[t] = s / THREAD_POOL_SIZE;
 
-		if (s - spawned_threads < THREAD_POOL_SIZE)
-			num_threads = s - spawned_threads;
-		else
-			num_threads = THREAD_POOL_SIZE;
-
-		for (int t = 0; t < num_threads; t++) {
-			pthread_create(&threads[t], NULL, &do_montecarlo, NULL);
+		if (t == THREAD_POOL_SIZE - 1) {
+			/* Include the remaininder in the last thread*/
+			s_arr[t] += (s % THREAD_POOL_SIZE);
 		}
 
-		for (int t = 0; t < num_threads; t++) {
-			pthread_join(threads[t], NULL);
-		}
-		spawned_threads += num_threads;
+		pthread_create(&threads[t], NULL, &do_montecarlo, &s_arr[t]);
 	}
 
-	fprintf(stderr, "c=%d\n", C);
+	for(int i = 0; i < THREAD_POOL_SIZE; i++)
+		fprintf(stderr, "arr: %d\n", s_arr[i]);
+
+	for (int t = 0; t < THREAD_POOL_SIZE; t++) {
+		pthread_join(threads[t], (void **)&c);
+		c_accum += *c;
+	}
+
+	fprintf(stderr, "c=%d\n", c_accum);
 	fprintf(stderr, "s=%d\n", s);
-	res = (4 * C) / (double)s;
+	res = (4 * c_accum) / (double)s;
 
 	return res;
 }
