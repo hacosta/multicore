@@ -44,6 +44,7 @@ void do_parallel_prefix(double *a, int count, const double *orig)
 			/* Someone already modified a to contain
 			 * the ith result, so add it and return
 			 */
+			fprintf(stderr, "optimized! : %d\n", count - i);
 			sum += a[i];
 			break;
 		}
@@ -99,7 +100,7 @@ void parallelPrefixSum(double *a, int count)
 		thread_num = MIN(THREAD_NUM, count - i);
 
 		for (int t = 0; t < thread_num; t++) {
-			args[t].count = i;
+			args[t].count = i + t;
 			args[t].orig = orig;
 			args[t].a = a;
 
