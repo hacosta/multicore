@@ -59,7 +59,6 @@ public class LockFreeQueue implements MyQueue {
             Node currentTail = tail.get();
             Node tailNext = currentTail.next.get();
             // verify that current tail has not chagned
-
             if (currentTail == tail.get()) {
                 if (tailNext != null) {
                     //  attempt CAS operation, if fail try again
@@ -67,7 +66,8 @@ public class LockFreeQueue implements MyQueue {
                 } else { // inserting new node
                     if (currentTail.next.compareAndSet(null, newNode)) {
                         //  advancing tail
-                        tail.compareAndSet(currentTail, newNode); // if CAS fails, back to start of loop
+                        // if CAS fails, back to start of loop
+                        tail.compareAndSet(currentTail, newNode); 
                         System.out.println("enq : " + printQueue().toString() );
                         return true;
                     }
@@ -78,19 +78,22 @@ public class LockFreeQueue implements MyQueue {
 
     public Integer deq() {
         while (true) {
-            Node oldHead = head.get(); // get current head
-            Node oldTail = tail.get(); // get current tail
-            Node oldHeadNext = oldHead.next.get(); // get current head.next
-            if (oldHead == head.get()) { // check old head and tail
-                if (oldHead == oldTail) {
-                    if (oldHeadNext == null)
-                        return null; // there is no blocking , try again
-                    tail.compareAndSet(oldTail, oldHeadNext); // CAS attemp, if fail start loop again
-                } else { // No need to deal with tail
-                    if (head.compareAndSet(oldHead, oldHeadNext))
+            //get the currrent head that will be deq
+            Node head = head.get(); 
+            Node headNext = head.next.get();
+            
+            Node tail = tail.get(); 
+            //check to make sure things have not changed
+            if (head == head.get()) { 
+                if (head == tail) {
+                    if (headNext == null)
+                        return null; 
+                    // CAS attemp, if fail start loop again
+                    tail.compareAndSet(tail, headNext); 
+                } else { 
+                    if (head.compareAndSet(head, headNext))
                         System.out.println("deq : " + printQueue().toString() );
-                    return oldHeadNext.vaule;
-                    //return null;
+                    return headNext.vaule;
                 }
             }
         }
