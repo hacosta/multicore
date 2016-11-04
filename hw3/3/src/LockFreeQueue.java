@@ -2,6 +2,12 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class LockFreeQueue implements MyQueue {
 
+    public Node tmp = new Node(0, null);
+    public AtomicReference<Node> head
+            = new AtomicReference<Node>(tmp);
+    public AtomicReference<Node> tail
+            = new AtomicReference<Node>(tmp);
+
     protected class Node {
 
         public Integer vaule;
@@ -20,37 +26,47 @@ public class LockFreeQueue implements MyQueue {
 
 
     public String printQueue() {
-        String output = "";
-
+        String output = "<";
+        //traverse the node till head is null
+        int counter = 0;
         if (head != null) {
+            //grab the next node
             Node current = head.get().next.get();
+            //if next node is not null
             while (current != null) {
-                output += "[" + current.getValue().toString() + "]";
+                //print the output
+                output += "[ " ;
+                if (current.getValue() != null) {
+                    output += current.getValue().toString();
+                    }
+                output += " ]";
+                //advance the current node for the next loop
                 current = current.next.get();
+                counter++;
             }
-
         }
+
+        output += ">" + " size of queue: " + counter;
         return output;
     }
 
-    public Node dummy = new Node(0, null);
-    public AtomicReference<Node> head
-            = new AtomicReference<Node>(dummy);
-    public AtomicReference<Node> tail
-            = new AtomicReference<Node>(dummy);
 
     public boolean enq(Integer value) {
         Node newNode = new Node(value, null);
         while (true) {
-            Node curTail = tail.get();
-            Node tailNext = curTail.next.get();
-            if (curTail == tail.get()) { // check tail
-                if (tailNext != null) { //  advance tail
-                    tail.compareAndSet(curTail, tailNext);
+
+            Node currentTail = tail.get();
+            Node tailNext = currentTail.next.get();
+            // verify that current tail has not chagned
+
+            if (currentTail == tail.get()) {
+                if (tailNext != null) {
+                    //  attempt CAS operation, if fail try again
+                    tail.compareAndSet(currentTail, tailNext);
                 } else { // inserting new node
-                    if (curTail.next.compareAndSet(null, newNode)) {
+                    if (currentTail.next.compareAndSet(null, newNode)) {
                         //  advancing tail
-                        tail.compareAndSet(curTail, newNode); // if CAS fails, back to start of loop
+                        tail.compareAndSet(currentTail, newNode); // if CAS fails, back to start of loop
                         System.out.println("enq : " + printQueue().toString() );
                         return true;
                     }
@@ -60,7 +76,7 @@ public class LockFreeQueue implements MyQueue {
     }
 
     public Integer deq() {
-        for (; ; ) {
+        while (true) {
             Node oldHead = head.get(); // get current head
             Node oldTail = tail.get(); // get current tail
             Node oldHeadNext = oldHead.next.get(); // get current head.next
