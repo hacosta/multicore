@@ -33,6 +33,7 @@ public class LockFreeQueue implements MyQueue {
             //grab the next node
             Node current = head.get().next.get();
             //if next node is not null
+            // should take care of exceptions
             while (current != null) {
                 //print the output
                 output += "[ " ;
