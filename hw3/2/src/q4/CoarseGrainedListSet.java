@@ -1,5 +1,6 @@
 package q4;
 
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class CoarseGrainedListSet implements ListSet {
@@ -7,46 +8,35 @@ public class CoarseGrainedListSet implements ListSet {
 
     ReentrantLock lock;
     public Node head;
-    public int size;
+    public AtomicInteger size;
 
     public CoarseGrainedListSet() {
-        head = null;
+        head = new Node(Integer.MIN_VALUE);
+        head.next = new Node(Integer.MAX_VALUE); /* TAIL */
         lock = new ReentrantLock();
+        size = new AtomicInteger(0);
     }
 
     public boolean add(int value) {
         lock.lock();
         try {
             Node newNode = new Node(value);
+            Node curr = head;
+            Node prev = head.next;
 
-            if (head == null) {
-                head = newNode;
-                size++;
-                return true;
+            while (curr.value < value) {
+                prev = curr;
+                curr = curr.next;
             }
 
-            Node headPtr = head;
-            Node prev = null;
-
-            while (headPtr != null && headPtr.value < value) {
-                prev = headPtr;
-                headPtr = headPtr.next;
-            }
-
-            if (headPtr != null && headPtr.value == value)
+            if (curr.value == value)
                 /* Reject duplicates */
                 return false;
 
-            if (prev == null) {
-                /* We need a new head */
-                newNode.next = head;
-                head = newNode;
-            } else {
-                prev.next = newNode;
-                newNode.next = headPtr;
-            }
+            newNode.next = curr;
+            prev.next = newNode;
 
-            size++;
+            size.incrementAndGet();
             return true;
         } finally {
             lock.unlock();
@@ -75,7 +65,7 @@ public class CoarseGrainedListSet implements ListSet {
                 head = head.next;
             }
 
-            size--;
+            size.decrementAndGet();
             return true;
         } finally {
             lock.unlock();

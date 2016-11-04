@@ -1,107 +1,122 @@
 package q4;
 
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class FineGrainedListSet implements ListSet {
-    ReentrantLock lock;
     public Node head;
-    public int size;
+    public Node tail;
+    public AtomicInteger size;
 
     public FineGrainedListSet() {
-        head = null;
-        lock = new ReentrantLock();
+        /* Our fine grained list set starts at head.next */
+        head = new Node(null);
+        tail = new Node(null);
+        head.next = tail;
+        size = new AtomicInteger(0);
     }
 
     public boolean add(int value) {
-        lock.lock();
+        Node prev = head;
+        head.lock();
         try {
-            Node newNode = new Node(value);
-
-            if (head == null) {
-                head = newNode;
-                size++;
-                return true;
+            Node curr = prev.next;
+            curr.lock();
+            try {
+                while (curr.value != null && curr.value < value) {
+                    prev.unlock();
+                    prev = curr;
+                    curr = curr.next;
+                    curr.lock();
+                }
+                if (curr.value != null && curr.value == value)
+                    return false;
+                else {
+                    Node node = new Node(value);
+                    node.next = curr;
+                    prev.next = node;
+                    size.incrementAndGet();
+                    return true;
+                }
+            } finally {
+                curr.unlock();
             }
-
-            Node headPtr = head;
-            Node prev = null;
-
-            while (headPtr != null && headPtr.value < value) {
-                prev = headPtr;
-                headPtr = headPtr.next;
-            }
-
-            if (headPtr != null && headPtr.value == value)
-                /* Reject duplicates */
-                return false;
-
-            if (prev == null) {
-                /* We need a new head */
-                newNode.next = head;
-                head = newNode;
-            } else {
-                prev.next = newNode;
-                newNode.next = headPtr;
-            }
-
-            size++;
-            return true;
         } finally {
-            lock.unlock();
+            prev.unlock();
         }
     }
 
     public boolean remove(int value) {
-        lock.lock();
+        Node prev = null;
+        Node curr;
+        head.lock();
         try {
-            if (head == null)
+            prev = head;
+            curr = prev.next;
+            curr.lock();
+            try {
+                while (curr.value < value) {
+                    prev.unlock();
+                    prev = curr;
+                    curr = curr.next;
+                    curr.lock();
+                }
+                if (value == curr.value) {
+                    prev.next = curr.next;
+                    size.decrementAndGet();
+                    return true;
+                }
                 return false;
-
-            Node headPtr = head;
-            Node prev = null;
-            while (headPtr != null && headPtr.value < value) {
-                prev = headPtr;
-                headPtr = headPtr.next;
+            } finally {
+                curr.unlock();
             }
-            if (headPtr.value != value) {
-                /* We didn't find the value */
-                return false;
-            }
-            if (prev != null) {
-                prev.next = headPtr.next;
-            } else {
-                head = head.next;
-            }
-
-            size--;
-            return true;
         } finally {
-            lock.unlock();
+            prev.unlock();
         }
     }
 
     public boolean contains(int value) {
+        Node prev = null;
+        Node curr;
+        head.lock();
         try {
-            lock.lock();
-            Node headPtr = head;
-            while (headPtr != null) {
-                if (headPtr.value == value)
-                    return true;
-                headPtr = headPtr.next;
+            prev = head;
+            curr = prev.next;
+            curr.lock();
+            try {
+                while (curr.value < value) {
+                    prev.unlock();
+                    prev = curr;
+                    curr = curr.next;
+                    curr.lock();
+                }
+                return value == curr.value;
+            } finally {
+                curr.unlock();
             }
-            return false;
         } finally {
-            lock.unlock();
+            prev.unlock();
         }
     }
 
     protected class Node {
         public Integer value;
         public Node next;
+        private Lock lock;
 
         public Node(Integer x) {
             value = x;
             next = null;
+            lock = new ReentrantLock();
+        }
+
+        public void lock() {
+            lock.lock();
+        }
+
+        public void unlock() {
+            lock.unlock();
         }
     }
 }
