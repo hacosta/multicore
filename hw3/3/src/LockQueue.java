@@ -1,4 +1,5 @@
 
+
 import java.util.concurrent.atomic.*;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -99,15 +100,17 @@ public class LockQueue implements MyQueue {
 
     public String printQueue() {
         String output = "";
-
+        output += "<";
         if (head != null) {
+
             Node current = head.getNext();
             while (current != null) {
-                output += "[" + current.getValue().toString() + "]";
+                output += "[ " + current.getValue().toString() + " ]";
                 current = current.getNext();
             }
 
         }
+        output += ">";
         return output;
     }
 
@@ -140,3 +143,4 @@ public class LockQueue implements MyQueue {
 
     }
 }
+
