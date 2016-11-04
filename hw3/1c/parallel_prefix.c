@@ -44,7 +44,6 @@ void do_parallel_prefix(double *a, int count, const double *orig)
 			/* Someone already modified a to contain
 			 * the ith result, so add it and return
 			 */
-			fprintf(stderr, "optimized! : %d\n", count - i);
 			sum += a[i];
 			break;
 		}
