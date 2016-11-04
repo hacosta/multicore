@@ -3,6 +3,8 @@
 // You should implement CoarseGrainedListBasedSet, FineGrainedListBasedSet and
 // LockFreeListBasedSet by extending this class
 package q4;
+
+
 public interface ListSet {
   // Appends the specified element to the end of this list
   // Return true if successful
