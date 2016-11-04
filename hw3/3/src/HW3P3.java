@@ -29,9 +29,11 @@ public class HW3P3 {
                     MyQueue.enq(random.nextInt(64));
                     sleep(random.nextInt(64));
                 } else {
-                    //MyQueue.deq();
-                    System.out.println("return value : " + MyQueue.deq().toString() );
-                    sleep(random.nextInt(64));
+                    Integer foo = MyQueue.deq();
+                    if (foo != null) {
+                        System.out.println("return value : " + foo.toString());
+                        sleep(random.nextInt(64));
+                    }
                 }
             }
         };
@@ -67,8 +69,8 @@ public class HW3P3 {
     public static void main(String args[]) {
         HW3P3 hw = new HW3P3();
 
-        String[] protocolTypes = {"LOCK"};
-        //String[] protocolTypes = {"unLOCK"};
+        //String[] protocolTypes = {"LOCK"};
+        String[] protocolTypes = {"unLOCK"};
 
         //String[] protocolTypes = {"LOCK", "noLOCK"};
 

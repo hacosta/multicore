@@ -79,19 +79,19 @@ public class LockFreeQueue implements MyQueue {
     public Integer deq() {
         while (true) {
             //get the currrent head that will be deq
-            Node head = head.get(); 
-            Node headNext = head.next.get();
+            Node chead = head.get();
+            Node headNext = chead.next.get();
             
-            Node tail = tail.get(); 
+            Node ctail = tail.get();
             //check to make sure things have not changed
-            if (head == head.get()) { 
-                if (head == tail) {
+            if (chead == head.get()) {
+                if (chead == ctail) {
                     if (headNext == null)
                         return null; 
                     // CAS attemp, if fail start loop again
-                    tail.compareAndSet(tail, headNext); 
+                    tail.compareAndSet(ctail, headNext);
                 } else { 
-                    if (head.compareAndSet(head, headNext))
+                    if (head.compareAndSet(chead, headNext))
                         System.out.println("deq : " + printQueue().toString() );
                     return headNext.vaule;
                 }
