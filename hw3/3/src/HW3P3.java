@@ -1,9 +1,5 @@
 import java.util.Random;
 
-/**
-
- */
-
 public class HW3P3 {
 
     final Random random = new Random();
@@ -30,11 +26,12 @@ public class HW3P3 {
             @Override
             public void run() {
                 if(random.nextBoolean()) {
-                    MyQueue.enq(random.nextInt(5));
-                    sleep(random.nextInt(5));
+                    MyQueue.enq(random.nextInt(64));
+                    sleep(random.nextInt(64));
                 } else {
-                    MyQueue.deq();
-                    sleep(random.nextInt(10));
+                    //MyQueue.deq();
+                    System.out.println("return value : " + MyQueue.deq().toString() );
+                    sleep(random.nextInt(64));
                 }
             }
         };
@@ -48,21 +45,22 @@ public class HW3P3 {
             threads[i].join();
         }
     }
-    public void simplestTest(MyQueue myQueue) {
+    public void simplestTest(MyQueue MyQueue) {
 
         /* Simple test. */
-        myQueue.enq(random.nextInt(5));
-        myQueue.deq();
-        myQueue.enq(random.nextInt(5));
-        myQueue.deq();
-        myQueue.enq(random.nextInt(5));
-        myQueue.enq(random.nextInt(5));
-        myQueue.enq(random.nextInt(5));
-        myQueue.deq();
-        myQueue.enq(random.nextInt(5));
-        myQueue.deq();
-        myQueue.deq();
-        myQueue.deq();
+        MyQueue.enq(random.nextInt(64));
+        //myQueue.deq();
+        System.out.println("return value : " + MyQueue.deq().toString() );
+        MyQueue.enq(random.nextInt(64));
+        System.out.println("return value : " + MyQueue.deq().toString() );
+        MyQueue.enq(random.nextInt(64));
+        MyQueue.enq(random.nextInt(64));
+        MyQueue.enq(random.nextInt(64));
+        System.out.println("return value : " + MyQueue.deq().toString() );
+        MyQueue.enq(random.nextInt(64));
+        System.out.println("return value : " + MyQueue.deq().toString() );
+        System.out.println("return value : " + MyQueue.deq().toString() );
+        System.out.println("return value : " + MyQueue.deq().toString() );
 
     }
 
@@ -70,6 +68,8 @@ public class HW3P3 {
         HW3P3 hw = new HW3P3();
 
         String[] protocolTypes = {"LOCK"};
+        //String[] protocolTypes = {"unLOCK"};
+
         //String[] protocolTypes = {"LOCK", "noLOCK"};
 
         for(String type: protocolTypes) {
