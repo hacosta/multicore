@@ -50,7 +50,7 @@ public class LockQueue implements MyQueue {
             count.incrementAndGet();
             //notEmpty.signalAll();
             lockEnq.unlock();
-            printSize();
+            System.out.println("enq : " + printQueue().toString() + " size of queue: " + count.toString());
         }
         return false;
     }
@@ -58,30 +58,33 @@ public class LockQueue implements MyQueue {
     public Integer deq() {
         // implement your deq method here
         try {
+
             lockDeq.lock();
             //wait till count is at least 1
             while (count.intValue() < 1) {
                 //System.out.println("Queue is empty, awaiting value for deq...");
-               // notEmpty.await();
+                // notEmpty.await();
                 Thread.sleep(5);
             }
 
             //deque a value
             Node current = head;
-            if (head != null) {
-                current.setNext(current.getNext().getNext());
+            int oldHeadNextValue = current.getNext().value;
+            //if (head != null) {
+            //   current.setNext(current.getNext().getNext());
+            //}
+            current.setNext(current.getNext().getNext());
 
-            }
+            count.decrementAndGet();
+            System.out.println("deq : " + printQueue().toString() + " size of queue: " + count.toString());
+
+            lockDeq.unlock();
+
+            return oldHeadNextValue;
 
         } catch (InterruptedException e) {
             e.printStackTrace();
-
-        } finally {
-                count.decrementAndGet();
-                lockDeq.unlock();
-                printSize();
-            }
-
+        }
         return null;
     }
 
@@ -92,6 +95,20 @@ public class LockQueue implements MyQueue {
 
     public void printSize(){
         System.out.println(count.toString());
+    }
+
+    public String printQueue() {
+        String output = "";
+
+        if (head != null) {
+            Node current = head.getNext();
+            while (current != null) {
+                output += "[" + current.getValue().toString() + "]";
+                current = current.getNext();
+            }
+
+        }
+        return output;
     }
 
 
