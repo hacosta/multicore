@@ -122,17 +122,18 @@ void print_arr(double *a, int count)
 
 double *read_lines(int *len)
 {
-	int curr_alloc = 256;
-	double *ret = malloc(sizeof(double) * curr_alloc);
+	int curr_alloc = 2048 * sizeof(double);
+	double *ret = malloc(curr_alloc);
+	double v;
 	char line[1024], *e;
-	long v;
+	int line_counter = 0;
 
 	*len = 0;
 	while (fgets(line, sizeof(line), stdin)) {
+		line_counter++;
 		v = strtod(line, &e);
 		if (line == e) {
-			fprintf(stderr, "warning: Skipping line: %s", line);
-			continue;
+			usage(EXIT_FAILURE);
 		}
 
 		ret[*len] = v;
