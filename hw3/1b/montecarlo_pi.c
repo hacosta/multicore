@@ -8,8 +8,8 @@
 #include <string.h>
 #include <time.h>
 
-#define DEFAULT_S 51200000
-#define THREAD_POOL_SIZE 4
+#include <omp.h>
+#define DEFAULT_S 512000000
 
 void usage(int exit_status)
 {
@@ -27,58 +27,43 @@ int randint(int max, unsigned int *seed){
 	return rand_r(seed) / (RAND_MAX / (max + 1) + 1);
 }
 
-void *do_montecarlo(void *s)
+int do_montecarlo(int s)
 {
-	static int R = 12000;
+	static int R = 8932;
 
 	int x, y, x2, y2;
-	int *c = malloc(sizeof(int *));
+	int ret = 0;
 	int R2 = R * R;
-	int casted_s = *(int *)s;
 
 	srand(time(NULL));
 	unsigned int seed = rand();
 
-	*c = 0;
-	for (int i = 0; i < casted_s; i ++) {
+#pragma omp parallel
+{
+#pragma omp for
+	for (int i = 0; i < s; i ++) {
 		x = randint(R, &seed);
 		y = randint(R, &seed);
 		x2 = x * x;
 		y2 = y * y;
 		if (x2 + y2 < R2) {
-			*c = *c + 1;
+#pragma omp critical
+			ret++;
 		}
 	}
-
-	return (void*)c;
+}
+	return ret;
 }
 
 double MonteCarloPi(int s)
 {
-	int *c = malloc(sizeof(int*));
-	int c_accum = 0;
+	int c;
 	double res;
 
-	pthread_t threads[THREAD_POOL_SIZE];
-	int s_arr[THREAD_POOL_SIZE];
-
-	for (int t = 0; t < THREAD_POOL_SIZE; t++) {
-		s_arr[t] = s / THREAD_POOL_SIZE;
-
-		if (t == THREAD_POOL_SIZE - 1) {
-			/* Include the remaininder in the last thread*/
-			s_arr[t] += (s % THREAD_POOL_SIZE);
-		}
-
-		pthread_create(&threads[t], NULL, &do_montecarlo, &s_arr[t]);
-	}
-
-	for (int t = 0; t < THREAD_POOL_SIZE; t++) {
-		pthread_join(threads[t], (void **)&c);
-		c_accum += *c;
-	}
-
-	res = (4 * c_accum) / (double)s;
+	c = do_montecarlo(s);
+	fprintf(stderr, "c=%d\n", c);
+	fprintf(stderr, "s=%d\n", s);
+	res = 4.0 * (double)c / (double)s;
 
 	return res;
 }
